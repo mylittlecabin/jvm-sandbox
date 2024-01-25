@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -x
 # program : sandbox
 #  author : luanjia@taobao.com
 #    date : 2018-03-12
@@ -251,6 +251,18 @@ function attach_jvm() {
   local token
   token="$(date | head | cksum | sed 's/ //g')"
 
+  echo "SANDBOX_JVM_OPS=${SANDBOX_JVM_OPS}"
+  echo "SANDBOX_LIB_DIR=${SANDBOX_LIB_DIR}"
+  echo "TARGET_JVM_PID=${TARGET_JVM_PID}"
+  echo "SANDBOX_HOME_DIR=${SANDBOX_HOME_DIR}"
+  echo "token=${token}"
+  echo "TARGET_SERVER_IP=${TARGET_SERVER_IP}"
+  echo "TARGET_SERVER_PORT=${TARGET_SERVER_PORT}"
+  echo "TARGET_NAMESPACE=${TARGET_NAMESPACE}"
+  echo "TARGET_JVM_PID=${TARGET_JVM_PID}"
+  echo "SANDBOX_TOKEN_FILE=${SANDBOX_TOKEN_FILE}"
+
+
   # attach target jvm
   "${SANDBOX_JAVA_HOME}/bin/java" \
     ${SANDBOX_JVM_OPS} \
@@ -264,7 +276,7 @@ function attach_jvm() {
   SANDBOX_SERVER_NETWORK=$(grep "${token}" "${SANDBOX_TOKEN_FILE}" | grep "${TARGET_NAMESPACE}" | tail -1 | awk -F ";" '{print $3";"$4}')
   [[ -z ${SANDBOX_SERVER_NETWORK} ]] &&
     exit_on_err 1 "attach JVM ${TARGET_JVM_PID} fail, attach lose response."
-
+  echo "SANDBOX_SERVER_NETWORK=${SANDBOX_SERVER_NETWORK}"
 }
 
 # execute sandbox command
