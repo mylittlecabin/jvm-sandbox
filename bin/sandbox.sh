@@ -272,6 +272,14 @@ function attach_jvm() {
     "home=${SANDBOX_HOME_DIR};token=${token};server.ip=${TARGET_SERVER_IP};server.port=${TARGET_SERVER_PORT};namespace=${TARGET_NAMESPACE}" ||
     exit_on_err 1 "attach JVM ${TARGET_JVM_PID} fail."
 
+  echo "agent command is=${SANDBOX_JAVA_HOME}/bin/java \
+      ${SANDBOX_JVM_OPS} \
+      -jar \"${SANDBOX_LIB_DIR}/sandbox-core.jar\" \
+      \"${TARGET_JVM_PID}\" \
+      \"${SANDBOX_LIB_DIR}/sandbox-agent.jar\" \
+      \"home=${SANDBOX_HOME_DIR};token=${token};server.ip=${TARGET_SERVER_IP};server.port=${TARGET_SERVER_PORT};namespace=${TARGET_NAMESPACE}\""
+
+
   # get network from attach result
   SANDBOX_SERVER_NETWORK=$(grep "${token}" "${SANDBOX_TOKEN_FILE}" | grep "${TARGET_NAMESPACE}" | tail -1 | awk -F ";" '{print $3";"$4}')
   [[ -z ${SANDBOX_SERVER_NETWORK} ]] &&
