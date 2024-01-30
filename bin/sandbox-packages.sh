@@ -35,7 +35,7 @@ cp ../sandbox-core/target/sandbox-core-*-jar-with-dependencies.jar ${SANDBOX_TAR
     && cp install-local.sh ${SANDBOX_TARGET_DIR}/install-local.sh
 
 # sandbox's version
-SANDBOX_VERSION=$(cat ..//sandbox-core/target/classes/com/alibaba/jvm/sandbox/version)
+SANDBOX_VERSION=$(cat ../sandbox-core/target/classes/com/alibaba/jvm/sandbox/version)
 echo "${SANDBOX_VERSION}" > ${SANDBOX_TARGET_DIR}/cfg/version
 
 # for example

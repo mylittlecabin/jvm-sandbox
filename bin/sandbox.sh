@@ -262,6 +262,13 @@ function attach_jvm() {
   echo "TARGET_JVM_PID=${TARGET_JVM_PID}"
   echo "SANDBOX_TOKEN_FILE=${SANDBOX_TOKEN_FILE}"
 
+#  范例命令：
+#  /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/bin/java
+#   -Xms128M -Xmx128M -Xnoclassgc -ea -Xbootclasspath/a:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/lib/tools.jar
+#     -jar /Users/zoubin08/jvm-sandbox/target/sandbox/bin/../lib/sandbox-core.jar
+#      12386
+#       /Users/zoubin08/jvm-sandbox/target/sandbox/bin/../lib/sandbox-agent.jar
+#       'home=/Users/zoubin08/jvm-sandbox/target/sandbox/bin/..;token=218579130229;server.ip=0.0.0.0;server.port=0;namespace=default'
 
   # attach target jvm
   "${SANDBOX_JAVA_HOME}/bin/java" \

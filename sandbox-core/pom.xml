@@ -30,6 +30,7 @@
         </resources>
         <plugins>
             <plugin>
+                <!--这段配置的作用是在打包阶段，使用 maven-assembly-plugin 插件生成一个包含所有依赖的 JAR 文件，并设置 com.alibaba.jvm.sandbox.core.CoreLauncher 为主类。 -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
