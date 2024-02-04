@@ -18,6 +18,7 @@ public class ProviderClassLoader extends RoutingURLClassLoader {
                                final ClassLoader sandboxClassLoader) throws IOException {
         super(
                 new URL[]{new URL("file:" + providerJarFile.getPath())},
+                //这些路径对应的类都在sandbox-core打成的jar包里（jar包包含依赖jar）；
                 new Routing(
                         sandboxClassLoader,
                         "^com\\.alibaba\\.jvm\\.sandbox\\.api\\..*$",

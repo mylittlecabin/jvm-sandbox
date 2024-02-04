@@ -159,6 +159,23 @@ try {
   ./sandbox.sh -p 33342 -S
   jvm-sandbox[default] shutdown finished.
   ```
+## 调试
+- **配置调试环境**
+
+    目的是实现在同一个idea窗口可以同时编辑和调试jvm-sandbox和目标工程；
+    ```
+  #命令生成新工程
+    mvn archetype:generate -DgroupId=com.mycompany.app -DartifactId=my-app -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
+  
+  #将新工程packaging类型修改为pom
+  
+  #将jvm-sandbox和目标工程都copy到新工程下，并将新工程配置为二者的parent；
+
+  ```
+- **idea调试脚本命令配置**
+
+    参考如下：
+[![pFlQVv6.png](https://s11.ax1x.com/2024/02/04/pFlQVv6.png)](https://imgse.com/i/pFlQVv6)
 
 ## 项目构建
 
