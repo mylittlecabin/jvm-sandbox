@@ -170,7 +170,7 @@ public class ReWriteAdapter extends CodeLockAdapter implements Opcodes, AsmTypes
 
         }
     }
-
+    //[Ret, {rawRespond}]
     // 销毁栈顶原有元素
     private void popRawRespond(Type returnType) {
         final int sort = returnType.getSort();
@@ -180,9 +180,9 @@ public class ReWriteAdapter extends CodeLockAdapter implements Opcodes, AsmTypes
             }
             case Type.LONG:
             case Type.DOUBLE: {
-                dupX2();
-                pop();
-                pop2();
+                dupX2();  //-> [Ret, {rawRespond}, Ret] ;dup而后将dup的数据查到栈顶第三个位置；
+                pop();    //-> [{rawRespond}, Ret]
+                pop2();   //-> [Ret]  ;多数类型只占用一个slot,但long和double比较特殊，占用两个slot;
                 break;
             }
             default: {
@@ -208,7 +208,7 @@ public class ReWriteAdapter extends CodeLockAdapter implements Opcodes, AsmTypes
         /*
          * {rawRespond} 表示 isPopRawRespond = true 时才会存在
          *
-         * [Ret, {rawRespond}]
+         * [Ret, {rawRespond}]  //表示当前栈内情况（注释下指令还没执行）；
          */
         dup();
         /*
@@ -225,6 +225,7 @@ public class ReWriteAdapter extends CodeLockAdapter implements Opcodes, AsmTypes
         push(Spy.Ret.RET_STATE_RETURN);
         /*
          * [I,I,I, Ret, {rawRespond}]
+         * //IF_ICMPEQ :从栈顶取出两个int数据比对是否相等；这里是判断返回Ret状态，决策程序跳转的; 跳转到对应mark label处执行；
          */
         ifICmp(EQ, returnLabel);
         /*
@@ -238,8 +239,8 @@ public class ReWriteAdapter extends CodeLockAdapter implements Opcodes, AsmTypes
         /*
          * [Ret, {rawRespond}]
          */
-        goTo(finishLabel);
-        mark(returnLabel);
+        goTo(finishLabel);//走到这里说明前面两个EQ比对跳转分支都没匹配；这里表示前往finishLabel标签位置
+        mark(returnLabel);//插标签，表示对应标签代码入口处；
         /*
          * [I, Ret, {rawRespond}]
          */
@@ -278,7 +279,7 @@ public class ReWriteAdapter extends CodeLockAdapter implements Opcodes, AsmTypes
         /*
          * [Object]
          */
-        checkCast(ASM_TYPE_THROWABLE);
+        checkCast(ASM_TYPE_THROWABLE);//将栈顶对象强制转换为java.lang.Throwable
         /*
          * [Throwable]
          */

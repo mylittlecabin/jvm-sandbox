@@ -5,12 +5,17 @@ import com.alibaba.jvm.sandbox.core.enhance.weaver.asm.EventWeaver;
 import com.alibaba.jvm.sandbox.core.util.AsmUtils;
 import com.alibaba.jvm.sandbox.core.util.ObjectIDs;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.util.ASMifier;
+import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.util.TraceClassVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Set;
 
 import static org.apache.commons.io.FileUtils.writeByteArrayToFile;
@@ -61,7 +66,27 @@ public class EventEnhancer implements Enhancer {
         };
     }
 
-    private static final boolean isDumpClass = false;
+    /**
+     * 是否存储字节码到class文件
+     */
+    private static final boolean isDumpClass = true;
+    /**
+     *
+     */
+    private static final boolean isPrintOriginByteCode = true;
+    /**
+     * 是否打印字节码
+     */
+    private static final boolean isPrintNewByteCode = true;
+    /**
+     * 是否打印生成此字节码对应java asm代码
+     */
+    private static final boolean isPrintAsmCode = true;
+
+    /**
+     * 是否check class
+     */
+    private static final boolean isCheckClass = true;
 
     /*
      * dump class to file
@@ -103,16 +128,43 @@ public class EventEnhancer implements Enhancer {
         final ClassReader cr = new ClassReader(byteCodeArray);
         final ClassWriter cw = createClassWriter(targetClassLoader, cr);
         final int targetClassLoaderObjectID = ObjectIDs.instance.identity(targetClassLoader);
-        cr.accept(
-                new EventWeaver(ASM7, cw, namespace, listenerId,
-                        targetClassLoaderObjectID,
-                        cr.getClassName(),
-                        signCodes,
-                        eventTypeArray,
-                        nativePrefix
-                ),
-                EXPAND_FRAMES
-        );
+        if(isPrintNewByteCode){
+            //执行链路 EventWeaver -> tcv[asmCode] ->tcv[printByteCode] -> pw
+            PrintWriter pw = new PrintWriter(System.out);//打印到控制台
+            ClassVisitor tcv = new TraceClassVisitor(cw, pw);
+            if(isPrintAsmCode){
+                tcv = new TraceClassVisitor(tcv, new ASMifier(), pw);
+            }
+            if(isCheckClass){
+                tcv = new CheckClassAdapter(tcv);
+            }
+            tcv = new EventWeaver(ASM7, tcv, namespace, listenerId,
+                    targetClassLoaderObjectID,
+                    cr.getClassName(),
+                    signCodes,
+                    eventTypeArray,
+                    nativePrefix
+            );
+            if(isPrintOriginByteCode){
+                tcv = new TraceClassVisitor(tcv,pw);
+            }
+            cr.accept(tcv
+                    ,
+                    EXPAND_FRAMES
+            );
+            pw.flush();
+        }else {
+            cr.accept(
+                    new EventWeaver(ASM7, cw, namespace, listenerId,
+                            targetClassLoaderObjectID,
+                            cr.getClassName(),
+                            signCodes,
+                            eventTypeArray,
+                            nativePrefix
+                    ),
+                    EXPAND_FRAMES
+            );
+        }
         return dumpClassIfNecessary(cr.getClassName(), cw.toByteArray());
     }
 

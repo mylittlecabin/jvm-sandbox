@@ -207,10 +207,19 @@ public class EventWeaver extends ClassVisitor implements Opcodes, AsmTypes, AsmM
 
                 /*
                  * 触发Before事件并执行流程变更逻辑
+                 *
+                 * 这里因为lock方法，方法执行前后会分别执行
+                 * ICONST_2
+                 * POP
+                 * 和
+                 * ICONST_3
+                 * POP
+                 * 参考：com.alibaba.jvm.sandbox.core.enhance.weaver.asm.CodeLockAdapter.InnerAsmCodeLock
                  */
                 getCodeLock().lock(() -> {
-                    mark(beginLabel);
-                    loadArgArray();
+                    mark(beginLabel);//标记一个标签
+                    loadArgArray();//将方法入参以数组形式压入操作栈；【a】
+                    //-- 静态方法参数准备开始--------------->
                     dup();
                     push(namespace);
                     push(listenerId);
@@ -218,11 +227,12 @@ public class EventWeaver extends ClassVisitor implements Opcodes, AsmTypes, AsmM
                     push(targetJavaClassName);
                     push(name);
                     push(desc);
-                    loadThisOrPushNullIfIsStatic();
-                    invokeStatic(ASM_TYPE_SPY, ASM_METHOD_Spy$spyMethodOnBefore);
-                    swap();
-                    storeArgArray();
-                    pop();
+                    loadThisOrPushNullIfIsStatic();//将this压入操作栈（非静态方法：ALOAD 0 ;静态方法：ACONST_NULL；）
+                    //--静态方法参数准备结束----------------->
+                    invokeStatic(ASM_TYPE_SPY, ASM_METHOD_Spy$spyMethodOnBefore);//调用静态方法，输出结果压入栈；【b】
+                    swap();//交换栈顶两个元素位置，让【a】处参数数组元素处于栈顶
+                    storeArgArray();//将方法参数再存储回去（将方法参数值覆写回局部变量表；这个不是必须的，我理解是为了方便维护，比如有些情况想调整方法参数，这里则必须进行覆写修改了）
+                    pop();//将【a】的结果弹出
                     processControl(desc, false);
                 });
 
@@ -273,12 +283,20 @@ public class EventWeaver extends ClassVisitor implements Opcodes, AsmTypes, AsmM
 
                 }
             }
-
+            //调用来源org.objectweb.asm.commons.AdviceAdapter.visitInsn
+            //某些代表退出的指令会调用到这里，
+//                case RETURN:
+//                case IRETURN:
+//                case FRETURN:
+//                case ARETURN:
+//                case LRETURN:
+//                case DRETURN:
+//                case ATHROW:
             @Override
             protected void onMethodExit(final int opcode) {
-
+                //是不是catch块代码也可以在这里添加呢？？  不行，这里只是表示字节码层面的RETUN（正常返回）或者ATHROW（抛出异常），并不是执行时正常或异常；
+                //正常return退出的执行如下代码
                 if (!isThrow(opcode) && !getCodeLock().isLock()) {
-
                     /*
                      * 触发Return事件并执行流程变更逻辑
                      */
@@ -289,28 +307,30 @@ public class EventWeaver extends ClassVisitor implements Opcodes, AsmTypes, AsmM
                         invokeStatic(ASM_TYPE_SPY, ASM_METHOD_Spy$spyMethodOnReturn);
                         processControl(desc, true);
                     });
-
                 }
             }
-
+            //visitMaxs  映射的方法对应字节码的最后位置，表名当前方法需要用到的操作栈大小和局部变量表大小；这个位置可以标志位方法的结束位置；
+            // 方法结束位之前插入新增catch块逻辑（这里是统一对业务方法体进行catch）；
             @Override
             public void visitMaxs(int maxStack, int maxLocals) {
-                mark(endLabel);
+//                mark(endLabel); //冗余标签
+                mark(beginCatchBlock);
                 mv.visitLabel(beginCatchBlock);
-                visitTryCatchBlock(beginLabel, endLabel, beginCatchBlock, ASM_TYPE_THROWABLE.getInternalName());
+                visitTryCatchBlock(beginLabel, beginCatchBlock, beginCatchBlock, ASM_TYPE_THROWABLE.getInternalName());
 
                 /*
                  * 触发Throw事件并执行流程变更逻辑
                  */
                 getCodeLock().lock(() -> {
-                    newLocal = newLocal(ASM_TYPE_THROWABLE);
-                    storeLocal(newLocal);
-                    loadLocal(newLocal);
+                    //将数据存储到局部变量表中好处是方便随时取用；
+                    newLocal = newLocal(ASM_TYPE_THROWABLE); //局部变量表中插入新的局部变量存储异常，newLocal为局部变量的索引
+                    storeLocal(newLocal);//ASTORE newLocal 弹出栈顶异常并赋给局部变量
+                    loadLocal(newLocal);//ALOAD newLocal 读取局部变量表中异常对象并压入栈顶
                     push(namespace);
                     push(listenerId);
-                    invokeStatic(ASM_TYPE_SPY, ASM_METHOD_Spy$spyMethodOnThrows);
+                    invokeStatic(ASM_TYPE_SPY, ASM_METHOD_Spy$spyMethodOnThrows);//这里会从栈中弹出并使用掉上面三个参数；
                     processControl(desc, false);
-                    loadLocal(newLocal);
+                    loadLocal(newLocal); //ALOAD newLocal 再次读取局部变量表中异常对象并压入栈顶
                 });
 
                 throwException();
