@@ -107,6 +107,32 @@ try {
 
 ![jvm-sandbox-architecture](https://github.com/alibaba/jvm-sandbox/wiki/img/jvm-sandbox-architecture.png)
 
+### 核心流程
+依照个人对源码的理解，核心流程可以划分为三个，**连接**、**增强**、**执行**；
+[![pF0VlqA.jpg](https://s11.ax1x.com/2024/03/01/pF0VlqA.jpg)](https://imgse.com/i/pF0VlqA)
+#### 连接
+1. 连接命令包含在sandbox.sh脚本attach_jvm方法中，范例如下：
+```text
+    /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/bin/java -Xms128M -Xmx128M 
+    -Xnoclassgc -ea -Xbootclasspath/a:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/lib/tools.jar 
+    -jar /Users/zoubin08/my-app/jvm-sandbox/target/sandbox/bin/../lib/sandbox-core.jar 
+    42352 /Users/zoubin08/my-app/jvm-sandbox/target/sandbox/bin/../lib/sandbox-agent.jar 'home=/Users/zoubin08/my-app/jvm-sandbox/target/sandbox/bin/..;token=223955225629;server.ip=0.0.0.0;server.port=0;namespace=default'
+```
+2. 以sandbox-core为启动jar先attach到目标业务应用jvm，以sandbox-agent为agent jar；
+3. agent采用jetty构建http服务（实现通过http Command来激活、卸载增强逻辑）；
+4. agent加载所有业务自定义module（自定义处理逻辑）；
+#### 增强
+1. sandbox.sh脚本中通过http形式给目标业务jvm发送指令；命令范例：
+```text
+   #broken-clock-tinker是module id
+   #repairCheckState 基于Command注解标志的一个用于织入监听器逻辑的自定义方法
+   curl -N -s http://wpsfile-sh.ks3-cn-shanghai.ksyun.com:55239/sandbox/default/module/http/broken-clock-tinker/repairCheckState
+```
+2. 对匹配的类的方法进行增强处理（基于Instrumentation和asm技术），增强主要就是增加了对Spy类方法的调用；
+3. 将自定义处理逻辑封装到监听器中；
+#### 执行
+1. 被增强的业务方法增加了对Spy类方法的调用，Spy类方法通过调用监听器，最终执行到module中定义的命令方法逻辑；
+
 ## 快速安装
 - **下载并安装或自行打包**
 
@@ -163,15 +189,14 @@ try {
 - **配置调试环境**
 
     目的是实现在同一个idea窗口可以同时编辑和调试jvm-sandbox和目标工程；
-    ```
-  #命令生成新工程
+1. 命令生成新工程
+```text
     mvn archetype:generate -DgroupId=com.mycompany.app -DartifactId=my-app -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
+```
+2. 将新工程packaging类型修改为pom
   
-  #将新工程packaging类型修改为pom
-  
-  #将jvm-sandbox和目标工程都copy到新工程下，并将新工程配置为二者的parent；
+3. 将jvm-sandbox和目标工程都copy到新工程下，并将新工程配置为二者的parent；
 
-  ```
 - **idea调试脚本命令配置**
 
     参考如下：

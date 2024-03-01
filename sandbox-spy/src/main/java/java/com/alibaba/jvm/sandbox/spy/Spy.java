@@ -287,22 +287,23 @@ public class Spy {
 
         // 删除节点
         void delete(final Node node) {
-            node.pre.next = node.next;
+            node.pre.next = node.next;//node前面一个节点 -> node的后一个节点 （next)
             if (null != node.next) {
-                node.next.pre = node.pre;
+                node.next.pre = node.pre;//node的后面一个节点 -> node的前一个节点 (pre)
             }
             // help gc
-            node.pre = (node.next = null);
+            node.pre = (node.next = null); //去除node对外引用关联，帮助gc
         }
 
         // 插入节点
+        //将节点node紧跟插入top节点后
         void insert(final Node top, final Node node) {
             if (null != top.next) {
-                top.next.pre = node;
+                top.next.pre = node; //node后面一个节点（原top后一个节点） -> node (pre)
             }
-            node.next = top.next;
-            node.pre = top;
-            top.next = node;
+            node.next = top.next; //node -> node后面一个节点（原top后一个节点）（next)
+            node.pre = top;//node -> top (pre)
+            top.next = node; //top -> next (next)
         }
 
         static final int THREAD_LOCAL_ARRAY_LENGTH = 512;

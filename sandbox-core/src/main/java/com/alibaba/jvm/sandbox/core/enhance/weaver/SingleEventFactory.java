@@ -18,7 +18,7 @@ class SingleEventFactory {
     private static final int ILLEGAL_INVOKE_ID = -1;
 
     private static final Unsafe unsafe;
-    private static final long processIdFieldInInvokeEventOffset;
+    private static final long processIdFieldInInvokeEventOffset; //字段地址相对对象起始地址的偏移量
     private static final long invokeIdFieldInInvokeEventOffset;
     private static final long javaClassLoaderFieldInBeforeEventOffset;
     private static final long javaClassNameFieldInBeforeEventOffset;
@@ -83,7 +83,7 @@ class SingleEventFactory {
         if (null == beforeEvent) {
             beforeEvent = new BeforeEvent(ILLEGAL_PROCESS_ID, ILLEGAL_INVOKE_ID, null, null, null, null, null, null);
         }
-        unsafe.putInt(beforeEvent, processIdFieldInInvokeEventOffset, processId);
+        unsafe.putInt(beforeEvent, processIdFieldInInvokeEventOffset, processId);//putInt(Object o, long offset, int x)：将int值x写入到对象o中offset偏移量处的内存。offset偏移量通常通过objectFieldOffset方法获取。
         unsafe.putInt(beforeEvent, invokeIdFieldInInvokeEventOffset, invokeId);
         unsafe.putObject(beforeEvent, javaClassLoaderFieldInBeforeEventOffset, javaClassLoader);
         unsafe.putObject(beforeEvent, javaClassNameFieldInBeforeEventOffset, javaClassName);
