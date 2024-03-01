@@ -109,7 +109,7 @@ try {
 
 ### 核心流程
 依照个人对源码的理解，核心流程可以划分为三个，**连接**、**增强**、**执行**；
-[![pF0VlqA.jpg](https://s11.ax1x.com/2024/03/01/pF0VlqA.jpg)](https://imgse.com/i/pF0VlqA)
+![jvm-sandbox核心流程](https://github.com/mylittlecabin/jvm-sandbox/blob/master/pic/jvm-sandbox%E6%A0%B8%E5%BF%83%E6%B5%81%E7%A8%8B.jpg?raw=true)
 #### 连接
 1. 连接命令包含在sandbox.sh脚本attach_jvm方法中，范例如下：
 ```text
@@ -200,7 +200,7 @@ try {
 - **idea调试脚本命令配置**
 
     参考如下：
-[![pFlQVv6.png](https://s11.ax1x.com/2024/02/04/pFlQVv6.png)](https://imgse.com/i/pFlQVv6)
+![脚本调试命令](https://github.com/mylittlecabin/jvm-sandbox/blob/master/pic/%E8%84%9A%E6%9C%AC%E6%89%A7%E8%A1%8C%E6%8C%87%E4%BB%A4.png?raw=true)
 
 ## 项目构建
 
